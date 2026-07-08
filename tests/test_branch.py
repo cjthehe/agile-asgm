@@ -2,8 +2,8 @@ from agile_ci_demo.testbranch import add_numbers, greet
 
 
 def test_add_numbers():
-    assert add_numbers(2, 3) == 5
+    assert add_numbers(4, 2) == 2
 
 
 def test_greet():
-    assert greet("Patient") == "Hello, Patient!"
+    assert greet("Lenglui") == "Hello, Lenglui!"
