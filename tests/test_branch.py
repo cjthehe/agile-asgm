@@ -6,4 +6,4 @@ def test_add_numbers():
 
 
 def test_greet():
-    assert greet("Lengzai") == "Hello, LengZai!"
+    assert greet("LengZai") == "Hello, LengZai!"
