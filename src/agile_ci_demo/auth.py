@@ -6,7 +6,7 @@ router = APIRouter()
 
 patients = {"patient@example.com": {"password": "password123", "name": "John Doe"}}
 
-sessions = {}
+sessions: dict[str, str] = {}
 
 
 class LoginRequest(BaseModel):
