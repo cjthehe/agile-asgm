@@ -1,9 +1,7 @@
-# ==========================================
-# Book Appointment Module (Dummy Data)
-# Sprint 1 - Day 2
-# ==========================================
+from datetime import datetime
 
-# Dummy counselor data
+# Dummy Counselor Data
+
 counselors = [
     {
         "id": 1,
@@ -19,119 +17,244 @@ counselors = [
         "id": 2,
         "name": "Dr. John",
         "specialization": "Depression",
-        "available_slots": ["10 July 2026 11:00 AM", "11 July 2026 3:00 PM"],
+        "available_slots": [
+            "10 July 2026 11:00 AM",
+            "11 July 2026 3:00 PM",
+        ],
+    },
+    {
+        "id": 3,
+        "name": "Dr. Emily",
+        "specialization": "Stress Management",
+        "available_slots": [
+            "12 July 2026 10:00 AM",
+            "12 July 2026 2:00 PM",
+        ],
     },
 ]
 
-# Store booked appointments
+
+# Temporary appointment storage
+# Later replace with database
 appointments = []
 
 
-def display_counselors():
-    print("\n========== Available Counselors ==========")
+# Display Appointment Form
+
+
+def display_booking_form():
+    print("\n================================")
+    print("      Appointment Booking Form")
+    print("================================")
+
+
+# Search Counselor
+
+
+def search_counselor():
+
+    keyword = input("\nSearch counselor name/specialization: ").lower()
+
+    results = []
 
     for counselor in counselors:
-        print(f"ID : {counselor['id']}")
-        print(f"Name : {counselor['name']}")
-        print(f"Specialization : {counselor['specialization']}")
-        print("---------------------------------------")
+        if keyword in counselor["name"].lower() or keyword in counselor["specialization"].lower():
+            results.append(counselor)
+
+    if len(results) == 0:
+        print("\nNo counselor found.")
+        return None
+
+    print("\n========== Counselor Results ==========")
+
+    for counselor in results:
+        print(f"{counselor['id']}. " f"{counselor['name']} - " f"{counselor['specialization']}")
+
+    while True:
+
+        try:
+            choice = int(input("\nSelect counselor ID: "))
+
+            for counselor in results:
+                if counselor["id"] == choice:
+                    return counselor
+
+            print("Invalid counselor.")
+
+        except ValueError:
+            print("Please enter a number.")
 
 
-def find_counselor(counselor_id):
-    for counselor in counselors:
-        if counselor["id"] == counselor_id:
-            return counselor
-    return None
+# Retrieve Counselor Slots
 
 
-def display_slots(counselor):
-    print(f"\nAvailable Slots for {counselor['name']}")
+def retrieve_slots(counselor):
+
+    print(f"\nAvailable slots for " f"{counselor['name']}")
 
     if len(counselor["available_slots"]) == 0:
         print("No available slots.")
-        return False
+        return None
 
-    for i, slot in enumerate(counselor["available_slots"], start=1):
-        print(f"{i}. {slot}")
+    for index, slot in enumerate(counselor["available_slots"], start=1):
+        print(f"{index}. {slot}")
 
-    return True
+    while True:
+
+        try:
+            choice = int(input("\nSelect slot: "))
+
+            if choice >= 1 and choice <= len(counselor["available_slots"]):
+                return counselor["available_slots"][choice - 1]
+
+            print("Invalid slot.")
+
+        except ValueError:
+            print("Please enter a number.")
 
 
-def book_appointment():
+# Validate Duplicate Booking
 
-    print("\n========= Book Appointment =========")
 
-    patient_name = input("Enter Patient Name: ")
+def check_duplicate_booking(patient_name, selected_slot):
 
-    display_counselors()
+    for appointment in appointments:
 
-    try:
-        counselor_id = int(input("\nSelect Counselor ID: "))
-    except ValueError:
-        print("Invalid ID.")
-        return
+        if (
+            appointment["patient"].lower() == patient_name.lower()
+            and appointment["slot"] == selected_slot
+            and appointment["status"] == "Booked"
+        ):
+            return True
 
-    counselor = find_counselor(counselor_id)
+    return False
 
-    if counselor is None:
-        print("Counselor not found.")
-        return
 
-    if not display_slots(counselor):
-        return
+# Create Appointment Record
 
-    try:
-        slot_choice = int(input("\nChoose Slot Number: "))
-    except ValueError:
-        print("Invalid choice.")
-        return
 
-    if slot_choice < 1 or slot_choice > len(counselor["available_slots"]):
-        print("Invalid slot.")
-        return
+def create_appointment(patient_name, counselor, selected_slot):
 
-    selected_slot = counselor["available_slots"][slot_choice - 1]
+    appointment_id = f"APT{len(appointments)+1:03d}"
 
-    # Create appointment
     appointment = {
+        "appointment_id": appointment_id,
         "patient": patient_name,
         "counselor": counselor["name"],
         "specialization": counselor["specialization"],
         "slot": selected_slot,
+        "status": "Booked",
+        "booking_date": datetime.now().strftime("%d %B %Y"),
     }
 
     appointments.append(appointment)
 
-    # Remove booked slot
+    return appointment
+
+
+# Lock Booked Slot
+
+
+def lock_slot(counselor, selected_slot):
+
     counselor["available_slots"].remove(selected_slot)
 
-    print("\n========== Booking Successful ==========")
-    print(f"Patient        : {appointment['patient']}")
-    print(f"Counselor      : {appointment['counselor']}")
-    print(f"Specialization : {appointment['specialization']}")
-    print(f"Appointment    : {appointment['slot']}")
+
+# Display Confirmation
 
 
-# -------------------
-# Main Program
-# -------------------
+def display_confirmation(appointment):
+
+    print("\n================================")
+
+    print("   Appointment Confirmed")
+
+    print("================================")
+
+    print(f"Appointment ID : " f"{appointment['appointment_id']}")
+
+    print(f"Patient        : " f"{appointment['patient']}")
+
+    print(f"Counselor      : " f"{appointment['counselor']}")
+
+    print(f"Specialization : " f"{appointment['specialization']}")
+
+    print(f"Date & Time    : " f"{appointment['slot']}")
+
+    print(f"Status         : " f"{appointment['status']}")
+
+    print("================================")
+
+
+# Main Booking Process
+
+
+def book_appointment():
+
+    display_booking_form()
+
+    patient_name = input("\nEnter patient name: ")
+
+    if patient_name.strip() == "":
+        print("Patient name cannot be empty.")
+        return
+
+    counselor = search_counselor()
+
+    if counselor is None:
+        return
+
+    selected_slot = retrieve_slots(counselor)
+
+    if selected_slot is None:
+        return
+
+    # Validate slot still exists
+
+    if selected_slot not in counselor["available_slots"]:
+
+        print("Slot is no longer available.")
+        return
+
+    # Prevent duplicate booking
+
+    if check_duplicate_booking(patient_name, selected_slot):
+
+        print("You already booked this slot.")
+        return
+
+    # Create appointment
+
+    appointment = create_appointment(patient_name, counselor, selected_slot)
+
+    # Lock slot
+
+    lock_slot(counselor, selected_slot)
+
+    display_confirmation(appointment)
+
+
+# Program Start
 
 while True:
 
-    print("\n===================================")
-    print("      Appointment Booking")
-    print("===================================")
+    print("\n================================")
+    print(" Appointment Booking System")
+    print("================================")
     print("1. Book Appointment")
     print("2. Exit")
 
-    choice = input("Enter choice: ")
+    choice = input("Choose option: ")
 
     if choice == "1":
+
         book_appointment()
 
     elif choice == "2":
-        print("Thank you.")
+
+        print("System closed.")
         break
 
     else:
-        print("Invalid choice.")
+
+        print("Invalid option.")
