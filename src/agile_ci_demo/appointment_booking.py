@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any
 
-
 # Dummy Counselor Data
 
 appointments: list[dict[str, Any]] = []
