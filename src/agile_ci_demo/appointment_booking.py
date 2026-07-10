@@ -1,7 +1,10 @@
 from datetime import datetime
+from typing import Any
+
 
 # Dummy Counselor Data
 
+appointments: list[dict[str, Any]] = []
 counselors = [
     {
         "id": 1,
@@ -36,7 +39,6 @@ counselors = [
 
 # Temporary appointment storage
 # Later replace with database
-appointments = []
 
 
 # Display Appointment Form
