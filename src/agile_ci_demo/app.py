@@ -2,6 +2,7 @@ from typing import Dict
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from agile_ci_demo.auth import router as auth_router
 
 app = FastAPI(title="Agile CI Demo", version="0.1.0")
 
@@ -58,3 +59,6 @@ def mark_done(item_id: int) -> Item:
 # Optional: helper for tests to reset state (not exposed as an endpoint)
 def reset_db() -> None:
     _db.clear()
+
+
+app.include_router(auth_router)
