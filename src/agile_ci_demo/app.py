@@ -60,7 +60,7 @@ def book():
 def appointments():
 
     return render_template(
-        "appointments.html",
+        "appointment.html",
         appointments=get_all_appointments(),
     )
 

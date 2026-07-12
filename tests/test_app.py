@@ -1,81 +1,118 @@
-from fastapi.testclient import TestClient
+import pytest
 
-from agile_ci_demo.app import app, reset_db
+from agile_ci_demo.app import app
+from agile_ci_demo.appointment_booking import appointments
+from agile_ci_demo.dummy_data import counselors
 
-client = TestClient(app)
+
+@pytest.fixture
+def client():
+    """
+    Create Flask test client.
+    """
+
+    app.config["TESTING"] = True
+
+    return app.test_client()
 
 
 def setup_function() -> None:
-    """Called by pytest before every test in this module."""
-    reset_db()
-
-
-def test_health():
     """
-    Scenario: API health check
-      Given the API is running
-      When I GET /health
-      Then I receive 200 and {"status": "ok"}
+    Reset data before every test.
     """
-    r = client.get("/health")
-    assert r.status_code == 200
-    assert r.json()["status"] == "ok"
+
+    appointments.clear()
+
+    # Reset dummy counselor slots
+    counselors[0]["available_slots"] = [
+        "10 July 2026 10:00 AM",
+        "10 July 2026 2:00 PM",
+        "11 July 2026 9:00 AM",
+    ]
+
+    counselors[1]["available_slots"] = [
+        "10 July 2026 11:00 AM",
+        "11 July 2026 3:00 PM",
+    ]
 
 
-def test_create_and_get_item():
+def test_home_page(client):
     """
-    Scenario: Add a todo item
-      Given the API is running
-      When I POST /items with a new item
-      Then I receive 201 and the item is persisted
+    Scenario:
+      Given the Flask application is running
+      When user accesses homepage
+      Then homepage loads successfully
     """
-    item = {"id": 1, "title": "Read agile guide"}
 
-    # Create
-    r = client.post("/items", json=item)
-    assert r.status_code == 201
-    body = r.json()
-    assert body["id"] == 1
-    assert body["title"] == "Read agile guide"
-    assert body["done"] is False
+    response = client.get("/")
 
-    # Read back
-    r2 = client.get("/items/1")
-    assert r2.status_code == 200
-    body2 = r2.json()
-    assert body2["id"] == 1
-    assert body2["title"] == "Read agile guide"
-    assert body2["done"] is False
+    assert response.status_code == 200
 
 
-def test_conflict_on_duplicate():
+def test_booking_page(client):
     """
-    Scenario: Cannot create duplicate item IDs
-      Given an item with ID 2 exists
-      When I POST another item with ID 2
-      Then I receive 409 Conflict
+    Scenario:
+      Given patient wants to book appointment
+      When patient opens booking page
+      Then booking form is displayed
     """
-    item = {"id": 2, "title": "Duplicate"}
 
-    # First create succeeds
-    r1 = client.post("/items", json=item)
-    assert r1.status_code == 201
+    response = client.get("/book")
 
-    # Second create fails
-    r2 = client.post("/items", json=item)
-    assert r2.status_code == 409
+    assert response.status_code == 200
 
 
-def test_mark_done():
+def test_select_counselor(client):
     """
-    Scenario: Mark an item as done
-      Given an item with ID 3 exists
-      When I PATCH /items/3/done
-      Then the item is marked as done
+    Scenario:
+      Given counselors exist
+      When patient selects a counselor
+      Then available slots are retrieved
     """
-    item = {"id": 3, "title": "Finish demo"}
-    client.post("/items", json=item)
 
-    r = client.patch("/items/3/done")
-    assert r.status_code == 200
-    assert r.json()["done"] is True
+    response = client.post(
+        "/book",
+        data={
+            "counselor": "1",
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert b"10 July 2026 10:00 AM" in response.data
+
+
+def test_view_appointments(client):
+    """
+    Scenario:
+      Given appointment records exist
+      When patient views appointments
+      Then appointment page is displayed
+    """
+
+    response = client.get("/appointments")
+
+    assert response.status_code == 200
+
+
+def test_cancel_appointment(client):
+    """
+    Scenario:
+      Given an appointment exists
+      When user cancels appointment
+      Then cancellation request is successful
+    """
+
+    appointments.append(
+        {
+            "appointment_id": "APT001",
+            "patient": "John Doe",
+            "counselor": "Dr. Sarah",
+            "slot": "10 July 2026 10:00 AM",
+            "status": "Booked",
+        }
+    )
+
+    response = client.get("/cancel/APT001")
+
+    assert response.status_code == 302
