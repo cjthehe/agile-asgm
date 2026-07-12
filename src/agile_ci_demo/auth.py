@@ -10,7 +10,7 @@ patients = {
     }
 }
 
-sessions = {}
+sessions: dict[str, str] = {}
 
 
 @auth.route("/welcome")
