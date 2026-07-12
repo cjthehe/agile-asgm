@@ -1,64 +1,74 @@
-from typing import Dict
+from flask import Flask, render_template, request, redirect
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from agile_ci_demo.auth import router as auth_router
+from .dummy_data import counselors
 
-app = FastAPI(title="Agile CI Demo", version="0.1.0")
+from .auth import auth
 
+from .appointment_booking import (
+    get_all_appointments,
+    cancel_appointment,
+)
 
-class Item(BaseModel):
-    id: int
-    title: str
-    done: bool = False
+app = Flask(__name__)
 
-
-# naive in-memory "database" – fine for a teaching/demo app
-_db: Dict[int, Item] = {}
+app.register_blueprint(auth)
 
 
-@app.get("/health")
-def health() -> dict:
-    """Simple health check endpoint used by tests and monitoring."""
-    return {"status": "ok"}
+# Flask
+# HOME PAGE
+@app.route("/")
+def home():
+    return render_template("home.html")
 
 
-@app.post("/items", status_code=201)
-def create_item(item: Item) -> Item:
-    """Create a new todo item.
+# BOOKING PAGE
+@app.route("/book", methods=["GET", "POST"])
+def book():
 
-    Returns 409 if an item with the same ID already exists.
-    """
-    if item.id in _db:
-        raise HTTPException(status_code=409, detail="Item with that ID already exists")
+    selected_counselor = None
+    available_slots = []
 
-    _db[item.id] = item
-    return item
+    # When user selects counselor
+    if request.method == "POST":
 
+        counselor_id = request.form.get("counselor")
 
-@app.get("/items/{item_id}")
-def get_item(item_id: int) -> Item:
-    """Fetch a single item by ID."""
-    if item_id not in _db:
-        raise HTTPException(status_code=404, detail="Not found")
-    return _db[item_id]
+        if counselor_id:
 
+            counselor_id = int(counselor_id)
 
-@app.patch("/items/{item_id}/done")
-def mark_done(item_id: int) -> Item:
-    """Mark an item as done."""
-    if item_id not in _db:
-        raise HTTPException(status_code=404, detail="Not found")
+            for counselor in counselors:
 
-    item = _db[item_id]
-    item.done = True
-    _db[item_id] = item
-    return item
+                if counselor["id"] == counselor_id:
 
+                    selected_counselor = counselor
 
-# Optional: helper for tests to reset state (not exposed as an endpoint)
-def reset_db() -> None:
-    _db.clear()
+                    available_slots = counselor["available_slots"]
+
+                    break
+
+    return render_template(
+        "booking.html",
+        counselors=counselors,
+        selected_counselor=selected_counselor,
+        available_slots=available_slots,
+    )
 
 
-app.include_router(auth_router)
+# APPOINTMENT LIST
+@app.route("/appointments")
+def appointments():
+
+    return render_template(
+        "appointment.html",
+        appointments=get_all_appointments(),
+    )
+
+
+# CANCEL APPOINTMENT
+@app.route("/cancel/<appointment_id>")
+def cancel(appointment_id):
+
+    cancel_appointment(appointment_id)
+
+    return redirect("/appointments")

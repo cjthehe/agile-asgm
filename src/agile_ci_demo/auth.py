@@ -1,44 +1,69 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from flask import Blueprint, request, jsonify
 from uuid import uuid4
 
-router = APIRouter()
+auth = Blueprint(
+    "auth",
+    __name__,
+)
 
-patients = {"patient@example.com": {"password": "password123", "name": "John Doe"}}
 
+# Dummy patient data
+patients = {
+    "patient@example.com": {
+        "password": "password123",
+        "name": "John Doe",
+    }
+}
+
+
+# Temporary session storage
 sessions: dict[str, str] = {}
 
 
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+@auth.route("/login", methods=["POST"])
+def login():
 
+    login_data = request.json
 
-class LogoutRequest(BaseModel):
-    session_id: str
+    email = login_data.get("email")
+    password = login_data.get("password")
 
+    if email not in patients:
 
-@router.post("/login")
-def login(login_data: LoginRequest):
+        return jsonify({"message": "Invalid email or password"}), 401
 
-    if login_data.email not in patients:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if patients[email]["password"] != password:
 
-    if patients[login_data.email]["password"] != login_data.password:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        return jsonify({"message": "Invalid email or password"}), 401
 
     session_id = str(uuid4())
-    sessions[session_id] = login_data.email
 
-    return {"message": "Login successful", "session_id": session_id}
+    sessions[session_id] = email
+
+    return jsonify(
+        {
+            "message": "Login successful",
+            "session_id": session_id,
+        }
+    )
 
 
-@router.post("/logout")
-def logout(logout_data: LogoutRequest):
+@auth.route("/logout", methods=["POST"])
+def logout():
 
-    if logout_data.session_id not in sessions:
-        raise HTTPException(status_code=401, detail="Invalid session")
+    logout_data = request.json
 
-    del sessions[logout_data.session_id]
+    session_id = logout_data.get("session_id")
 
-    return {"message": "Logout successful", "redirect": "/login"}
+    if session_id not in sessions:
+
+        return jsonify({"message": "Invalid session"}), 401
+
+    del sessions[session_id]
+
+    return jsonify(
+        {
+            "message": "Logout successful",
+            "redirect": "/login",
+        }
+    )
