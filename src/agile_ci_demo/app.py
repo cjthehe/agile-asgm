@@ -1,64 +1,74 @@
-from typing import Dict
-
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from agile_ci_demo.auth import router as auth_router
 
-app = FastAPI(title="Agile CI Demo", version="0.1.0")
+from flask import Flask, render_template, request, redirect
 
+from .dummy_data import counselors
 
-class Item(BaseModel):
-    id: int
-    title: str
-    done: bool = False
+from .appointment_booking import (
+    get_all_appointments,
+    cancel_appointment,
+)
 
-
-# naive in-memory "database" – fine for a teaching/demo app
-_db: Dict[int, Item] = {}
-
-
-@app.get("/health")
-def health() -> dict:
-    """Simple health check endpoint used by tests and monitoring."""
-    return {"status": "ok"}
-
-
-@app.post("/items", status_code=201)
-def create_item(item: Item) -> Item:
-    """Create a new todo item.
-
-    Returns 409 if an item with the same ID already exists.
-    """
-    if item.id in _db:
-        raise HTTPException(status_code=409, detail="Item with that ID already exists")
-
-    _db[item.id] = item
-    return item
-
-
-@app.get("/items/{item_id}")
-def get_item(item_id: int) -> Item:
-    """Fetch a single item by ID."""
-    if item_id not in _db:
-        raise HTTPException(status_code=404, detail="Not found")
-    return _db[item_id]
-
-
-@app.patch("/items/{item_id}/done")
-def mark_done(item_id: int) -> Item:
-    """Mark an item as done."""
-    if item_id not in _db:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    item = _db[item_id]
-    item.done = True
-    _db[item_id] = item
-    return item
-
-
-# Optional: helper for tests to reset state (not exposed as an endpoint)
-def reset_db() -> None:
-    _db.clear()
-
+app = Flask(__name__)
 
 app.include_router(auth_router)
+
+
+# Flask
+# HOME PAGE
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+
+# BOOKING PAGE
+@app.route("/book", methods=["GET", "POST"])
+def book():
+
+    selected_counselor = None
+    available_slots = []
+
+    # When user selects counselor
+    if request.method == "POST":
+
+        counselor_id = request.form.get("counselor")
+
+        if counselor_id:
+
+            counselor_id = int(counselor_id)
+
+            for counselor in counselors:
+
+                if counselor["id"] == counselor_id:
+
+                    selected_counselor = counselor
+
+                    available_slots = counselor["available_slots"]
+
+                    break
+
+    return render_template(
+        "booking.html",
+        counselors=counselors,
+        selected_counselor=selected_counselor,
+        available_slots=available_slots,
+    )
+
+
+# APPOINTMENT LIST
+@app.route("/appointments")
+def appointments():
+
+    return render_template(
+        "appointments.html",
+        appointments=get_all_appointments(),
+    )
+
+
+# CANCEL APPOINTMENT
+@app.route("/cancel/<appointment_id>")
+def cancel(appointment_id):
+
+    cancel_appointment(appointment_id)
+
+    return redirect("/appointments")
