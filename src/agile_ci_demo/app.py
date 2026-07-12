@@ -1,8 +1,8 @@
-from agile_ci_demo.auth import router as auth_router
-
 from flask import Flask, render_template, request, redirect
 
 from .dummy_data import counselors
+
+from .auth import auth
 
 from .appointment_booking import (
     get_all_appointments,
@@ -11,7 +11,7 @@ from .appointment_booking import (
 
 app = Flask(__name__)
 
-app.include_router(auth_router)
+app.register_blueprint(auth)
 
 
 # Flask
