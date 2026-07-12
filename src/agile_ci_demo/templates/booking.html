@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow">
+
+<div class="card-header bg-primary text-white">
+
+<h4>
+
+Book Appointment
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+<form method="POST" action="/book">
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Patient Name
+
+</label>
+
+<input
+type="text"
+class="form-control"
+name="patient"
+placeholder="Enter patient name"
+required>
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Search Counselor
+
+</label>
+
+<input
+type="text"
+class="form-control"
+name="keyword"
+placeholder="Search by name or specialization">
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Select Counselor
+
+</label>
+
+
+<select
+class="form-select"
+name="counselor"
+onchange="this.form.submit()">
+
+
+<option selected disabled>
+
+Choose Counselor
+
+</option>
+
+
+{% for counselor in counselors %}
+
+<option
+value="{{ counselor.id }}"
+
+{% if selected_counselor 
+and selected_counselor.id == counselor.id %}
+selected
+{% endif %}
+>
+
+
+{{ counselor.name }}
+-
+{{ counselor.specialization }}
+
+
+</option>
+
+
+{% endfor %}
+
+
+</select>
+
+</div>
+
+<div class="mb-3">
+
+<label class="form-label">
+
+Available Slot
+
+</label>
+
+
+<select
+class="form-select"
+name="slot">
+
+
+{% if available_slots %}
+
+
+{% for slot in available_slots %}
+
+<option>
+
+{{ slot }}
+
+</option>
+
+
+{% endfor %}
+
+
+{% else %}
+
+<option disabled>
+
+Please select counselor first
+
+</option>
+
+
+{% endif %}
+
+
+</select>
+
+
+</div>
+
+<button
+class="btn btn-primary">
+
+Book Appointment
+
+</button>
+
+<a
+href="/"
+class="btn btn-secondary">
+
+Back
+
+</a>
+
+</form>
+
+</div>
+
+</div>
+
+{% endblock %}

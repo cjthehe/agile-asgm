@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow">
+
+<div class="card-header bg-success text-white">
+
+<h4>
+
+Appointments
+
+</h4>
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-striped">
+
+<thead>
+
+<tr>
+
+<th>
+
+ID
+
+</th>
+
+<th>
+
+Patient
+
+</th>
+
+<th>
+
+Counselor
+
+</th>
+
+<th>
+
+Slot
+
+</th>
+
+<th>
+
+Status
+
+</th>
+
+<th>
+
+Action
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>
+
+APT001
+
+</td>
+
+<td>
+
+John Tan
+
+</td>
+
+<td>
+
+Dr. Sarah
+
+</td>
+
+<td>
+
+10 July 10AM
+
+</td>
+
+<td>
+
+<span class="badge bg-success">
+
+Booked
+
+</span>
+
+</td>
+
+<td>
+
+<a
+href="/cancel/APT001"
+class="btn btn-danger btn-sm">
+
+Cancel
+
+</a>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}
