@@ -4,6 +4,7 @@ src/agile_ci_demo/__init__.py
 src/agile_ci_demo/app.py
 src/agile_ci_demo/appointment_booking.py
 src/agile_ci_demo/auth.py
+src/agile_ci_demo/dummy_data.py
 src/agile_ci_demo/register.py
 src/agile_ci_demo/testbranch.py
 src/agile_demo.egg-info/PKG-INFO
@@ -11,8 +12,6 @@ src/agile_demo.egg-info/SOURCES.txt
 src/agile_demo.egg-info/dependency_links.txt
 src/agile_demo.egg-info/requires.txt
 src/agile_demo.egg-info/top_level.txt
-tests/test_acceptance_items.py
 tests/test_app.py
+tests/test_auth.py
 tests/test_branch.py
-tests/test_login.py
-tests/test_logout.py

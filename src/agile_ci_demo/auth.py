@@ -1,13 +1,8 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from uuid import uuid4
 
-auth = Blueprint(
-    "auth",
-    __name__,
-)
+auth = Blueprint("auth", __name__)
 
-
-# Dummy patient data
 patients = {
     "patient@example.com": {
         "password": "password123",
@@ -15,25 +10,39 @@ patients = {
     }
 }
 
-
-# Temporary session storage
-sessions: dict[str, str] = {}
+sessions = {}
 
 
-@auth.route("/login", methods=["POST"])
+@auth.route("/welcome")
+def index():
+    return redirect(url_for("auth.login_page"))
+
+
+@auth.route("/login")
+def login_page():
+    return render_template("auth.html")
+
+
+@auth.route("/home")
+def home():
+    return render_template("home.html")
+
+
+@auth.route("/api/login", methods=["POST"])
 def login():
 
-    login_data = request.json
+    login_data = request.get_json()
+
+    if not login_data:
+        return jsonify({"message": "Request body is required"}), 400
 
     email = login_data.get("email")
     password = login_data.get("password")
 
     if email not in patients:
-
         return jsonify({"message": "Invalid email or password"}), 401
 
     if patients[email]["password"] != password:
-
         return jsonify({"message": "Invalid email or password"}), 401
 
     session_id = str(uuid4())
@@ -48,15 +57,14 @@ def login():
     )
 
 
-@auth.route("/logout", methods=["POST"])
+@auth.route("/api/logout", methods=["POST"])
 def logout():
 
-    logout_data = request.json
+    logout_data = request.get_json()
 
     session_id = logout_data.get("session_id")
 
     if session_id not in sessions:
-
         return jsonify({"message": "Invalid session"}), 401
 
     del sessions[session_id]
@@ -64,6 +72,5 @@ def logout():
     return jsonify(
         {
             "message": "Logout successful",
-            "redirect": "/login",
         }
     )
